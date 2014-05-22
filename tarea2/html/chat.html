@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+	<head>
+		<title>Avioncito de Papel</title>
+		<meta charset="utf-8">
+		<link type="image/x-icon" rel="shortcut icon" href="assets/favicon.ico" />
+		<link rel="stylesheet" href="assets/css/bootstrap.css">
+		<style>
+			body{background-color: #eee;}
+			#historial{min-height: 300px;overflow-y:scroll;}
+			textarea{resize:none;}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>_servername_port_</h1>
+			<div id="historial" class="form-control form-group"></div>
+			<div class="row">
+				<div class="col-xs-8">
+					<textarea id="mensaje" class="form-control" rows="4" placeholder="Ingresa tu mensaje aqu&iacute;"></textarea>
+				</div>
+				<div class="col-xs-4">
+					<div class="form-group">
+						<button type="button" id="enviar" class="btn btn-primary btn-block">Enviar</button>
+					</div>
+					<button type="button" id="limpiar" class="btn btn-default" title="Limpiar historial del chat."><span class="glyphicon glyphicon-trash"></span></button>
+					<button type="button" id="limpiar" class="btn btn-default" title="Salir."><span class="glyphicon glyphicon-log-out"></span></button>
+				</div>
+			</div>
+		</div>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+		<script src="assets/js/bootstrap.min.js"></script>
+		<script type="text/javascript">
+			$('#enviar').on('click',function(){
+				var msg = $('#mensaje').val();
+				console.log('msg: '+msg);
+				$('#historial').append('<div class="text-muted"><strong>_username_</strong></div>');
+				$('#historial').append('<div class="text-left"><pre><em>'+msg+'</em></pre></div>');
+				$('#historial').prop({ scrollTop: $('#historial').prop('scrollHeight')});
+
+				$('#mensaje').val('');
+			});
+			$('#limpiar').on('click',function(){
+				$('#historial').html('');
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+	<head>
+		<title>Avioncito de Papel</title>
+		<meta charset="utf-8">
+		<link type="image/x-icon" rel="shortcut icon" href="assets/favicon.ico" />
+		<link rel="stylesheet" href="assets/css/bootstrap.css">
+		<style>
+			body{background-color: #eee;}
+			html,body,.container{height: 100%;}
+			.container{display:table;vertical-align: middle;}
+			.vertical-center-row{display: table-cell; vertical-align: middle;}
+			#conectar-form{min-width: 300px;}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="vertical-center-row">
+				<div class="row">
+					<div id="conectar-form" class="col-xs-4 col-xs-offset-4">
+						<div class="form-group">
+							<img src="assets/paperplane.gif" alt="logo" class="img-thumbnail">
+						</div>
+						<form action="chat.html" method="post">
+							<div class="form-group">
+								<input type="text" class="form-control" name="username" placeholder="Username">
+							</div>
+							<div class="form-group">
+								<input type="text" class="form-control" name="ip" placeholder="Host IP">
+							</div>
+							<div class="form-group">
+								<input type="text" class="form-control" name="puerto" placeholder="Puerto">
+							</div>
+							<div class="form-group">
+								<button type="submit" class="btn btn-primary btn-block" value="conectar">Conectar</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+		<script src="assets/js/bootstrap.min.js"></script>
+	</body>
+</html>
