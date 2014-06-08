@@ -13,16 +13,17 @@ class PeticionHTTP extends Thread {
 
 	public PeticionHTTP(Socket insocket){
 		this.socket = insocket;
-		this.start();
+		//this.start();
 	}
 	
 	@Override
-	public void run(){
+	public void run() {
 		
 		try{
 			BufferedReader entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			PrintWriter salida = new PrintWriter(socket.getOutputStream());
 			
+			//error socket closed??
 			String request = entrada.readLine();
 			System.out.println("["+this.getName()+"][HTTP-HEADER]: "+request); 
 	
@@ -30,6 +31,7 @@ class PeticionHTTP extends Thread {
 				String[] req = request.split("\\s+");
 				String metodo = req[0];
 				String archivo_requerido = req[1];
+				System.out.println("prueba:"+req[1]);
 				String instruccion = "";
 				int post_data_index = -1;
 				while( (instruccion = entrada.readLine()) != null && (instruccion.length() != 0)){
@@ -67,18 +69,19 @@ class PeticionHTTP extends Thread {
 						enviar_mensaje(post_data);
 					}
 				}
-				else{		
-					if( archivo_requerido.equals("/") ){
+				else if(metodo.equals("GET")){		
+					if( archivo_requerido.equals("/") || archivo_requerido.equals("") ){
 						archivo_requerido = "/index.html";
 					}
 				}
 				retorna_direccion(archivo_requerido,salida);
 				salida.close();
-				//socket.close();
+				entrada.close();
 				return;
 			}
 		}catch ( Exception e){
-			System.err.println( e.getMessage() );
+			System.out.println(e.getCause());
+			System.err.println( "error lectura:"+e.getMessage() );
 			e.printStackTrace();
 		}
 		return;
@@ -180,7 +183,7 @@ class PeticionHTTP extends Thread {
 	}
 	
     private static void enviar_mensaje(String data) throws UnknownHostException, IOException{
-		data = data.replace("&emisor=","|").replace("&destinatario=", "|").replace("&mensaje=", "");;
+		data = data.replace("&emisor=","|").replace("&destinatario=", "|").replace("&mensaje=", "");
 		/* Enviar a servidor TCP. */
     	Socket cliente = new Socket(InetAddress.getByName("localhost"),servidor_tcp_puerto);
     	DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
