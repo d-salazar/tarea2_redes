@@ -1,9 +1,13 @@
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
-import java.net.URLDecoder;
+import java.net.Socket;
 
 public class ServidorTCP {
 	/* SERVIDOR */
@@ -12,54 +16,48 @@ public class ServidorTCP {
 	private final static int servidor_tcp_puerto = 6000;
 	/* CONSTANTES */
 	private final static String archivo_mensajes = "mensajes.txt";
-	/* PROTOCOLO */
-	/*
-	 * ServidorTCP 1 -> Inicia servidor.
-	 * ServidorTCP 0 -> Cerrar servidor.
-	 * ServidorTCP 2 "asdf" -> Nuevo mensaje. 
-	 * 
-	 */
-	public final static int P_FIN_CON = 0;
-	public final static int P_INICIO_CON = 1;
-	public final static int P_MENSAJE = 2;
 		
 	public static void main(String[] args) throws IOException {
-		
-		switch(Integer.parseInt(args[1])){
-			case P_INICIO_CON:
-				iniciar();
-				break;
-			case P_FIN_CON:
-				cerrar();
-				break;
-			case P_MENSAJE:
-				guardar_mensaje(args[2]);
-				break;
-			default:
-				System.err.println("Para iniciar use: 'ServidorTCP 1'");
-				System.err.println("Para cerrar use: 'ServidorTCP 0'");
-				break;
-		}
-		return;
-	}
-	
-	private static void iniciar() throws IOException{
 		servidor_tcp = new ServerSocket(servidor_tcp_puerto);
 		servidor_tcp.setReuseAddress(true);
 		servidor_tcp_status = true;
-	}
-	
-	private static void cerrar() throws IOException{
+		System.out.println("SERVIDOR TCP");
+		while( servidor_tcp_status ){
+			Socket cliente = servidor_tcp.accept();
+			DataInputStream inCliente = new DataInputStream(cliente.getInputStream());
+			DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
+			
+			if( inCliente.available() > 0){
+				System.out.println("Mensaje nuevo: "+inCliente.readUTF());
+				
+				/* request en servidor_http => 'POST /mensajes.html' */
+				// inCliente = "G|emisor|destinatario|mensaje";
+				if( inCliente.readUTF().contains("G|" )){
+					guardar_mensaje(outCliente,inCliente.readUTF());
+				}
+				/* request en servidor_http => 'GET /mensajes.html' */
+				// inCliente = "L";
+				else if( inCliente.readUTF().equals("L") ){
+					enviar_mensaje(outCliente);
+				}else{
+					System.err.println("No se ha encontrado accion para: "+inCliente.readUTF());
+				}
+			}
+			
+			inCliente.close();
+			outCliente.close();
+			cliente.close();
+		}
+		
 		if( !servidor_tcp.isClosed() ){
-			System.out.println("Cerrando servidor TCP "+servidor_tcp.getLocalSocketAddress());
-			servidor_tcp_status = false;
+			System.out.println("Cerrando servidor HTTP"+servidor_tcp.getLocalSocketAddress());
 			servidor_tcp.close();
 		}
 	}
 	
-	private static void guardar_mensaje(String data){
+	private static void guardar_mensaje(DataOutputStream outCliente, String data) throws IOException{
 		try(PrintWriter archivo = new PrintWriter(new BufferedWriter(new FileWriter(archivo_mensajes, true)))) {
-			String[] parametros = URLDecoder.decode(data,"UTF-8").split("&",3);
+			String[] parametros = data.split("&",3);
 			
 			String emisor 		= parametros[0].split("=")[1];
 	    	String destinatario = parametros[1].split("=")[1];
@@ -67,12 +65,21 @@ public class ServidorTCP {
     		archivo.println(emisor+"|"+destinatario+"|"+mensaje);
     		archivo.close();
     	}catch (IOException e) {
-    	    System.err.println( e.getMessage() );e.printStackTrace();
+    	    System.err.println( e.getMessage() );
+    	    e.printStackTrace();
     	}
-		enviar_mensaje(data);
+		enviar_mensaje(outCliente);
 		return;
 	}
-	private static void enviar_mensaje(String data){
-		return;
+	private static void enviar_mensaje(DataOutputStream outCliente) throws IOException{
+		BufferedReader br = new BufferedReader(new FileReader(archivo_mensajes));
+		
+		String linea = br.readLine();
+		while( linea!= null ){
+			/* Enviar a servidor HTTP. */
+	    	outCliente.writeBytes(linea);
+	        linea = br.readLine();
+		}
+		br.close();
 	}
 }
