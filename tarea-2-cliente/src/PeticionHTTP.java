@@ -8,7 +8,7 @@ import java.util.Date;
 class PeticionHTTP extends Thread { 
 
 	final private static String archivo_contactos = "usuarios.txt";
-	final private static String archivo_mensajes = "mensajes.txt";
+	private final static int servidor_tcp_puerto = 6000;
 	private Socket socket;
 
 	public PeticionHTTP(Socket insocket){
@@ -58,11 +58,12 @@ class PeticionHTTP extends Thread {
 						try {
 							agregar_contacto(post_data);
 						} catch (FileNotFoundException e) {
-							System.err.println( e.getMessage() );e.printStackTrace();
+							System.err.println( e.getMessage() );
+							e.printStackTrace();
 						}
 					}
 					/* mensaje_nuevo */
-					if( archivo_requerido.equals("mensajes.html") ){
+					if( archivo_requerido.equals("/mensajes.html") ){
 						enviar_mensaje(post_data);
 					}
 				}
@@ -70,17 +71,15 @@ class PeticionHTTP extends Thread {
 					if( archivo_requerido.equals("/") ){
 						archivo_requerido = "/index.html";
 					}
-					else if( archivo_requerido.equals("mensajes.html") ){
-						recibir_mensaje();
-					}
 				}
 				retorna_direccion(archivo_requerido,salida);
 				salida.close();
-				socket.close();
+				//socket.close();
 				return;
 			}
 		}catch ( Exception e){
-			System.err.println( e.getMessage() );e.printStackTrace();
+			System.err.println( e.getMessage() );
+			e.printStackTrace();
 		}
 		return;
 	}		
@@ -123,7 +122,8 @@ class PeticionHTTP extends Thread {
 				salida.println("<p>No se ha podido presentar la direccion: "+direccion_archivo+"</p>");
 			}
 		}catch( Exception e){
-			System.err.println( e.getMessage() );e.printStackTrace();
+			System.err.println( e.getMessage() );
+			e.printStackTrace();
 		}
 		return;
 	}
@@ -154,54 +154,39 @@ class PeticionHTTP extends Thread {
     		archivo.println(s[0].split("=")[1].replaceAll("[\f\n\r\t\'\"\\\\]", " ")+"|"+s[1].split("=")[1]+"|"+s[2].split("=")[1]);
     		archivo.close();
     	}catch (IOException e) {
-    	    System.err.println( e.getMessage() );e.printStackTrace();
+    	    System.err.println( e.getMessage() );
+    	    e.printStackTrace();
     	}
     }
     
-	private static void listar_mensajes(PrintWriter salida) throws IOException{
-		BufferedReader br = new BufferedReader(new FileReader(archivo_mensajes));
+	private static void listar_mensajes(PrintWriter salida) throws IOException{	
+		/* Recibir mensajes de Servidor TCP */
+    	Socket cliente = new Socket(InetAddress.getByName("localhost"),servidor_tcp_puerto);
+    	DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
+    	BufferedReader inCliente = new BufferedReader(new InputStreamReader(cliente.getInputStream()));
+    	
+    	outCliente.writeBytes("L");
+		String mensaje[] = inCliente.readLine().split("\\|");
 		
-		String linea = br.readLine();
-		String[] data;
-		while( linea!= null ){
-			data = linea.split("\\|",3);
-			
-			salida.println("<tr>");
-	        salida.println("	<td>"+data[0]+"</td>");
-	        salida.println("	<td>"+data[1]+"</td>");
-	        salida.println("	<td>"+data[2]+"</td>");
-	        salida.println("</tr>");
-	        
-	        linea = br.readLine();
-		}
-		br.close();
+		salida.println("<tr>");
+	    salida.println("	<td>"+mensaje[0]+"</td>");
+	    salida.println("	<td>"+mensaje[1]+"</td>");
+	    salida.println("	<td>"+mensaje[2]+"</td>");
+	    salida.println("</tr>");
+		
+		inCliente.close();
+    	outCliente.close();
+    	cliente.close();
 	}
 	
-    private static void enviar_mensaje(String data) throws IOException{
-    	try {
-			data = URLEncoder.encode(data,"UTF-8");
-			// Enviar a servidor TCP.
-	    	Runtime.getRuntime().exec("ServidorTCP 2 "+data);	
-		} catch (UnsupportedEncodingException e) {
-			System.err.println( e.getMessage() );e.printStackTrace();
-		}
-    }
-    
-    private static void recibir_mensaje(){
-    	// Revisar servidor TCP y obtener variable "data"
-    	//String data = revisar_mensajes_servidor_TCP();
-    	String data = "emisor=diego&destinatario=rodrigo&mensaje=wena%20cabro!%20como%20va%20la%20tarea%3F";
-    	try {
-			String[] parametros = URLDecoder.decode(data,"UTF-8").split("&",3);
-			
-			String emisor 		= parametros[0].split("=")[1];
-	    	String destinatario = parametros[1].split("=")[1];
-	    	String mensaje		= parametros[2].split("=")[1];
-	    	
-	    	System.out.println("emisor:"+emisor+destinatario+mensaje);
-	    	
-		} catch (UnsupportedEncodingException e) {
-			System.err.println( e.getMessage() );e.printStackTrace();
-		}    	
+    private static void enviar_mensaje(String data) throws UnknownHostException, IOException{
+		data = data.replace("&emisor=","|").replace("&destinatario=", "|").replace("&mensaje=", "");;
+		/* Enviar a servidor TCP. */
+    	Socket cliente = new Socket(InetAddress.getByName("localhost"),servidor_tcp_puerto);
+    	DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
+    	outCliente.writeBytes("G|"+data);
+    	outCliente.flush();
+    	outCliente.close();
+    	cliente.close();
     }
 }
