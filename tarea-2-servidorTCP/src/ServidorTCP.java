@@ -27,17 +27,19 @@ public class ServidorTCP {
 			DataInputStream inCliente = new DataInputStream(cliente.getInputStream());
 			DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
 			
+			System.out.println("conexion establecida detectada y establecida...");
 			if( inCliente.available() > 0){
-				System.out.println("Mensaje nuevo: "+inCliente.readUTF());
+				String mensaje_recibido=inCliente.readUTF();
+				System.out.println("Mensaje nuevo: "+mensaje_recibido);
 				
 				/* request en servidor_http => 'POST /mensajes.html' */
 				// inCliente = "G|emisor|destinatario|mensaje";
-				if( inCliente.readUTF().contains("G|" )){
-					guardar_mensaje(outCliente,inCliente.readUTF());
+				if( mensaje_recibido.contains("G|" )){
+					guardar_mensaje(outCliente,mensaje_recibido);
 				}
 				/* request en servidor_http => 'GET /mensajes.html' */
 				// inCliente = "L";
-				else if( inCliente.readUTF().equals("L") ){
+				else if( mensaje_recibido.equals("L") ){
 					enviar_mensaje(outCliente);
 				}else{
 					System.err.println("No se ha encontrado accion para: "+inCliente.readUTF());
@@ -57,29 +59,40 @@ public class ServidorTCP {
 	
 	private static void guardar_mensaje(DataOutputStream outCliente, String data) throws IOException{
 		try(PrintWriter archivo = new PrintWriter(new BufferedWriter(new FileWriter(archivo_mensajes, true)))) {
-			String[] parametros = data.split("&",3);
+			String parametros[] = data.split("|",4);
 			
-			String emisor 		= parametros[0].split("=")[1];
-	    	String destinatario = parametros[1].split("=")[1];
-	    	String mensaje		= parametros[2].split("=")[1];
-    		archivo.println(emisor+"|"+destinatario+"|"+mensaje);
+			String emisor 		= parametros[1];
+	    	String destinatario = parametros[2];
+	    	String mensaje		= parametros[3];
+	    	//control para ver como lo esta separando
+	    	System.out.println(emisor+"-"+destinatario+"-"+mensaje);
+	    	//control para no guardar mensajes nulos
+	    	if(!mensaje.equals(""))archivo.println(emisor+"|"+destinatario+"|"+mensaje);
     		archivo.close();
     	}catch (IOException e) {
     	    System.err.println( e.getMessage() );
     	    e.printStackTrace();
     	}
+		/*para que volver a enviar?*/
 		enviar_mensaje(outCliente);
 		return;
 	}
 	private static void enviar_mensaje(DataOutputStream outCliente) throws IOException{
-		BufferedReader br = new BufferedReader(new FileReader(archivo_mensajes));
-		
-		String linea = br.readLine();
-		while( linea!= null ){
-			/* Enviar a servidor HTTP. */
-	    	outCliente.writeBytes(linea);
-	        linea = br.readLine();
+		try{
+			BufferedReader br = new BufferedReader(new FileReader(archivo_mensajes));
+			
+			if(br!=null){
+			String linea = br.readLine();
+			while( linea!= null ){
+				/* Enviar a servidor HTTP. */
+		    	outCliente.writeUTF(linea);
+		        linea = br.readLine();
+			}
+			}
+			br.close();
+		}catch(Exception e){
+			/*envia un mensaje al cliente para indicarle que no hay mensajes por listar */
+			outCliente.writeUTF("NOTHING");
 		}
-		br.close();
 	}
 }

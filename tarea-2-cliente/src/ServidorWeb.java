@@ -16,9 +16,7 @@ public class ServidorWeb {
 		
 		while ( servidor_http_status ) {
 			PeticionHTTP request = new PeticionHTTP(servidor_http.accept());
-			request.start();
-			//Thread thread = new Thread(request);
-			//thread.start(); 
+			request.start(); 
 		}
 		
 		if( !servidor_http.isClosed() ){

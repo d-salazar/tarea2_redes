@@ -74,6 +74,7 @@ class PeticionHTTP extends Thread {
 						archivo_requerido = "/index.html";
 					}
 				}
+				//si es get distinto de index...
 				retorna_direccion(archivo_requerido,salida);
 				salida.close();
 				entrada.close();
@@ -110,6 +111,7 @@ class PeticionHTTP extends Thread {
 					if( direccion_archivo.toLowerCase().contains("lista_contacto.html".toLowerCase()) && contador_linea==41){
 						listar_contactos(salida);
 					}else if( direccion_archivo.toLowerCase().contains("mensajes.html".toLowerCase()) && contador_linea==40){
+						System.out.println("listar mensajes");
 						listar_mensajes(salida);
 					}
 					salida.println(linea);
@@ -166,28 +168,36 @@ class PeticionHTTP extends Thread {
 		/* Recibir mensajes de Servidor TCP */
     	Socket cliente = new Socket(InetAddress.getByName("localhost"),servidor_tcp_puerto);
     	DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
-    	BufferedReader inCliente = new BufferedReader(new InputStreamReader(cliente.getInputStream()));
+    	DataInputStream inCliente = new DataInputStream(cliente.getInputStream());
+    	System.out.println("conexion exitosa al tcp (listar mensajes)");
     	
-    	outCliente.writeBytes("L");
-		String mensaje[] = inCliente.readLine().split("\\|");
+    	outCliente.writeUTF("L");
+    	/*verifica si hay mensajes almacenados en el tcp
+    	 * si el mensaje recibido es NOTHING entonces no hay datos...
+    	 */
+    	String inputData=inCliente.readUTF();
+    	
+    	if(!inputData.equals("NOTHING")){
+		String mensaje[] = inputData.split("\\|");
 		
 		salida.println("<tr>");
 	    salida.println("	<td>"+mensaje[0]+"</td>");
 	    salida.println("	<td>"+mensaje[1]+"</td>");
 	    salida.println("	<td>"+mensaje[2]+"</td>");
 	    salida.println("</tr>");
-		
+    	}
 		inCliente.close();
     	outCliente.close();
     	cliente.close();
 	}
 	
     private static void enviar_mensaje(String data) throws UnknownHostException, IOException{
-		data = data.replace("&emisor=","|").replace("&destinatario=", "|").replace("&mensaje=", "");
+    	System.out.println(data);
+		data = data.replace("emisor=","").replace("&destinatario=", "|").replace("&msj=", "|");
 		/* Enviar a servidor TCP. */
     	Socket cliente = new Socket(InetAddress.getByName("localhost"),servidor_tcp_puerto);
     	DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
-    	outCliente.writeBytes("G|"+data);
+    	outCliente.writeUTF("G|"+data);
     	outCliente.flush();
     	outCliente.close();
     	cliente.close();
