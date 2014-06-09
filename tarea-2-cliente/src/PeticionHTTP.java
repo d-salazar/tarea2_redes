@@ -13,7 +13,6 @@ class PeticionHTTP extends Thread {
 
 	public PeticionHTTP(Socket insocket){
 		this.socket = insocket;
-		//this.start();
 	}
 	
 	@Override
@@ -31,7 +30,6 @@ class PeticionHTTP extends Thread {
 				String[] req = request.split("\\s+");
 				String metodo = req[0];
 				String archivo_requerido = req[1];
-				System.out.println("prueba:"+req[1]);
 				String instruccion = "";
 				int post_data_index = -1;
 				while( (instruccion = entrada.readLine()) != null && (instruccion.length() != 0)){
@@ -51,6 +49,8 @@ class PeticionHTTP extends Thread {
 					/* cerrar_conexion */
 					if( post_data.equals("cerrar=true") ){ 
 						ServidorWeb.servidor_http_status = false;
+						entrada.close();
+						salida.close();
 						this.interrupt();
 						return;
 					}
@@ -94,7 +94,7 @@ class PeticionHTTP extends Thread {
 		}
 		try{
 			if( Files.exists(Paths.get(direccion_archivo)) ){
-				System.out.println("- Se solicita: "+direccion_archivo);
+				System.out.println("- REQUERIDO: "+direccion_archivo);
 				/* HEADERS */
 				salida.println("HTTP/1.0 200 OK");
 				salida.println("DATE: "+(new Date().toString()));
@@ -119,7 +119,7 @@ class PeticionHTTP extends Thread {
 					contador_linea++;
 				}
 				fl.close();
-				System.out.println("- fin envio: "+direccion_archivo);
+				System.out.println("- ENVIADO: "+direccion_archivo);
 			}else{
 				salida.println("HTTP/1.0 404 NOT FOUND");
 				salida.println("<h1>ERROR 404 - NOT FOUND</h1>");
@@ -169,22 +169,23 @@ class PeticionHTTP extends Thread {
     	Socket cliente = new Socket(InetAddress.getByName("localhost"),servidor_tcp_puerto);
     	DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
     	DataInputStream inCliente = new DataInputStream(cliente.getInputStream());
-    	System.out.println("conexion exitosa al tcp (listar mensajes)");
     	
     	outCliente.writeUTF("L");
-    	/*verifica si hay mensajes almacenados en el tcp
-    	 * si el mensaje recibido es NOTHING entonces no hay datos...
-    	 */
-    	String inputData=inCliente.readUTF();
     	
-    	if(!inputData.equals("NOTHING")){
-		String mensaje[] = inputData.split("\\|");
-		
-		salida.println("<tr>");
-	    salida.println("	<td>"+mensaje[0]+"</td>");
-	    salida.println("	<td>"+mensaje[1]+"</td>");
-	    salida.println("	<td>"+mensaje[2]+"</td>");
-	    salida.println("</tr>");
+    	while( true ){
+	    	String inputData = inCliente.readUTF();
+	    	
+	    	if(!inputData.equals("NOTHING")){
+				String mensaje[] = inputData.split("\\|");
+				
+				salida.println("<tr>");
+			    salida.println("	<td>"+mensaje[0]+"</td>");
+			    salida.println("	<td>"+mensaje[1]+"</td>");
+			    salida.println("	<td>"+mensaje[2]+"</td>");
+			    salida.println("</tr>");
+	    	}else{
+	    		break;
+	    	}
     	}
 		inCliente.close();
     	outCliente.close();

@@ -27,9 +27,10 @@ public class ServidorTCP {
 			DataInputStream inCliente = new DataInputStream(cliente.getInputStream());
 			DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
 			
-			System.out.println("conexion establecida detectada y establecida...");
-			if( inCliente.available() > 0){
-				String mensaje_recibido=inCliente.readUTF();
+			System.out.println("CONEXION ESTABLECIDA CON servidor_http");
+			//if( inCliente.available() > 0){
+			String mensaje_recibido=inCliente.readUTF();
+			if( mensaje_recibido != null ){
 				System.out.println("Mensaje nuevo: "+mensaje_recibido);
 				
 				/* request en servidor_http => 'POST /mensajes.html' */
@@ -59,21 +60,20 @@ public class ServidorTCP {
 	
 	private static void guardar_mensaje(DataOutputStream outCliente, String data) throws IOException{
 		try(PrintWriter archivo = new PrintWriter(new BufferedWriter(new FileWriter(archivo_mensajes, true)))) {
-			String parametros[] = data.split("|",4);
+			String parametros[] = data.split("\\|",4);
 			
 			String emisor 		= parametros[1];
 	    	String destinatario = parametros[2];
 	    	String mensaje		= parametros[3];
-	    	//control para ver como lo esta separando
-	    	System.out.println(emisor+"-"+destinatario+"-"+mensaje);
-	    	//control para no guardar mensajes nulos
-	    	if(!mensaje.equals(""))archivo.println(emisor+"|"+destinatario+"|"+mensaje);
+	    	
+	    	if( !mensaje.equals("") ){
+	    		archivo.println(emisor+"|"+destinatario+"|"+mensaje);
+	    	}
     		archivo.close();
     	}catch (IOException e) {
     	    System.err.println( e.getMessage() );
     	    e.printStackTrace();
     	}
-		/*para que volver a enviar?*/
 		enviar_mensaje(outCliente);
 		return;
 	}
@@ -82,12 +82,13 @@ public class ServidorTCP {
 			BufferedReader br = new BufferedReader(new FileReader(archivo_mensajes));
 			
 			if(br!=null){
-			String linea = br.readLine();
-			while( linea!= null ){
-				/* Enviar a servidor HTTP. */
-		    	outCliente.writeUTF(linea);
-		        linea = br.readLine();
-			}
+				String linea = br.readLine();
+				while( linea!= null ){
+					/* Enviar a servidor HTTP. */
+					System.out.println("linea_enviada=>"+linea);
+			    	outCliente.writeUTF(linea);
+			        linea = br.readLine();
+				}
 			}
 			br.close();
 		}catch(Exception e){
