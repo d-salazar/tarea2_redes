@@ -181,7 +181,7 @@ class PeticionHTTP extends Thread {
 				salida.println("<tr>");
 			    salida.println("	<td>"+mensaje[0]+"</td>");
 			    salida.println("	<td>"+mensaje[1]+"</td>");
-			    salida.println("	<td>"+mensaje[2]+"</td>");
+			    salida.println("	<td>"+URLDecoder.decode(mensaje[2],"UTF-8")+"</td>");
 			    salida.println("</tr>");
 	    	}else{
 	    		break;
