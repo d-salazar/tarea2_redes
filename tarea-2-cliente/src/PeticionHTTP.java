@@ -165,17 +165,14 @@ class PeticionHTTP extends Thread {
     }
     
 	private static void listar_mensajes(PrintWriter salida) throws IOException{	
-		/* Recibir mensajes de Servidor TCP */
     	Socket cliente = new Socket(InetAddress.getByName("localhost"),servidor_tcp_puerto);
     	DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
     	DataInputStream inCliente = new DataInputStream(cliente.getInputStream());
     	
     	outCliente.writeUTF("L");
-    	
-    	while( true ){
-	    	String inputData = inCliente.readUTF();
-	    	
-	    	if(!inputData.equals("NOTHING")){
+    	while( inCliente.available() > 0 ){
+    		String inputData = inCliente.readUTF();
+	    	if( !inputData.equals("NOTHING") ){
 				String mensaje[] = inputData.split("\\|");
 				
 				salida.println("<tr>");
@@ -193,11 +190,11 @@ class PeticionHTTP extends Thread {
 	}
 	
     private static void enviar_mensaje(String data) throws UnknownHostException, IOException{
-    	System.out.println(data);
 		data = data.replace("emisor=","").replace("&destinatario=", "|").replace("&msj=", "|");
 		/* Enviar a servidor TCP. */
     	Socket cliente = new Socket(InetAddress.getByName("localhost"),servidor_tcp_puerto);
     	DataOutputStream outCliente = new DataOutputStream(cliente.getOutputStream());
+    	
     	outCliente.writeUTF("G|"+data);
     	outCliente.flush();
     	outCliente.close();

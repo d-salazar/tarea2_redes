@@ -84,15 +84,12 @@ public class ServidorTCP {
 			if(br!=null){
 				String linea = br.readLine();
 				while( linea!= null ){
-					/* Enviar a servidor HTTP. */
-					System.out.println("linea_enviada=>"+linea);
 			    	outCliente.writeUTF(linea);
 			        linea = br.readLine();
 				}
 			}
 			br.close();
 		}catch(Exception e){
-			/*envia un mensaje al cliente para indicarle que no hay mensajes por listar */
 			outCliente.writeUTF("NOTHING");
 		}
 	}
